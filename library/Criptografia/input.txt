@@ -1,0 +1,89 @@
+
+
+Clase de ADR del dia 15 de Julio del 2017
+
+Etapas/Fases e Hitos
+
+Etapas - Fases: Es una coleccion de actividades relacionadas de manera logica, que generan un producto / servicio.
+
+Hitos: Representa un evento o condicion que marca la finalizacion de una tarea, actividad, etapa o fase.
+
+Ejemplo
+
+Inicio -> Planificacion -> Diseño -> Desarrollo -> Implementacion -> Cierre.
+
+Nota: para facilitar la gestion de los proyectos, estos se pueden dividir en etapas - fases.
+      El conjunto de estas etapas - fases, se conoce como el ciclo de vida del proyecto.
+
+Milestones - Hitos:
+
+Eventos importantes dentro del plan que nos ayudan como puntos de control.
+
+
+Estructura Organizacional:
+
+Permite relacionar a los distintos involucrados en el proyecto, estableciendo lineas de dependencia entre ellos y facilitando
+la toma de decisiones
+
+Ejemplo: Organigrama
+Proyecto Chico:
+- Lider de proyecto
+  - Referente clave
+  - Lider Tecnico Funcional (operaciones)
+  - Lider Desarrollo (Sistemas)
+
+Elaboracion Progresiva
+
+La elaboracion progresiva, es una caracteristica de los proyectos, dado que el producto de cada proyecto es unico y las caracteristicas que distinguen el producto o servicio deben ir elaborandose "lentamente"
+Ejemplo: Etapas Elaboracion Progresiva
+
+1. Inicio
+- Identificar la problematica o necesidad de negocio.
+- Definir enfoques de abordaje para la solucion (alto nivel)
+- Autorizar / aprobar el inicio del proyecto.
+
+2. Planificacion
+-Definicion del objetivo y alcance.
+- Diseño de la estructura, roles y responsabilidades.
+- Elaboracion del plan de trabajo.
+- Definicion de metodologia.
+
+3. Diseño
+- Elaboracion del diseño logico
+
+4. Desarrollo
+- Desarrollo de la solucion.
+- Puesta en marcha de las actividades del proyecto.
+
+5. Implementacion
+- Poner en marcha la solucion y someterlo a un proceso de evaluacion.
+
+Estrategias de implementacion: 
+Step by step: Paso a paso siguiendo un esquema de implementacion gradual.
+
+Roll out / Big bang: se implementa todo de una
+
+Prueba piloto: Se prueba en una sucursal o parte reducida y luego se pasa a las otras partes.
+
+6. Cierre
+- Formulacion de cierre de una etapa / proyecto.
+- Lecciones aprendidas, que se emiten en base a las experiencias
+  durante la vida del proyecto.
+
+
+Tipos de cierre:
+
+- Cierre propio del proyecto:
+  Se cumplen los objetivos y se completan todos los entregables pactados
+  en el inicio y planificacion del proyecto.
+  Se cuenta con la conformidad del cliente y de los sponsors.
+
+- Cierre administrativo:
+  Dejar la informacion, ver las lecciones aprendidas.
+  Contactar a los proveedores, etc. Dar todos los reportes,
+  darle la informacion del proyecto (reuniones, reportes actualizados, etc)
+  al cliente.
+  Guardar toda la informacion para poder consultarla en un futuro para tener
+  de referencia en proximos proyectos.
+  
+

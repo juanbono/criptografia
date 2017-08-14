@@ -1,0 +1,91 @@
+
+# This YAML file describes your package. Stack will automatically generate a
+# Cabal file when you run `stack build`. See the hpack website for help with
+# this file: <https://github.com/sol/hpack>.
+
+name: criptografia
+version: '0.0.0'
+license: MIT
+maintainer: Juan Bono
+github: juanbono/criptografia
+synopsis: A new Haskeleton package.
+description: Cryptographic Algorithms
+category: Other
+
+library:
+  dependencies:
+  - base
+  - JuicyPixels
+  - friday
+  - hip
+  - repa
+  - text
+  - bytestring
+  - modular-arithmetic
+  - vector
+  source-dirs: library
+  exposed-modules:
+    - Criptografia
+  ghc-options: -Wall
+
+executables:
+  cripto-cli:
+    dependencies:
+    - base
+    - criptografia
+    - optparse-applicative
+    - conduit
+    - conduit-combinators
+    - conduit-extra
+    - path
+    - path-io
+    ghc-options:
+    - -rtsopts
+    - -threaded
+    - -with-rtsopts=-N
+    main: Main.hs
+    source-dirs: executable-cli
+  cripto-http:
+    dependencies:
+      - base
+      - criptografia
+    ghc-options:
+      - -rtsopts
+      - -threaded
+      - -with-rtsopts=-N
+    main: Main.hs
+    source-dirs: executable-http
+
+tests:
+  criptografia-test-suite:
+    dependencies:
+    - base
+    - criptografia
+    - tasty
+    - tasty-hspec
+    ghc-options:
+    - -rtsopts
+    - -threaded
+    - -with-rtsopts=-N
+    main: Main.hs
+    source-dirs: test-suite
+
+benchmarks:
+  criptografia-benchmarks:
+    dependencies:
+    - base
+    - criptografia
+    - criterion
+    ghc-options:
+    - -rtsopts
+    - -threaded
+    - -with-rtsopts=-N
+    main: Main.hs
+    source-dirs: benchmark
+
+extra-source-files:
+- CHANGELOG.md
+- LICENSE.md
+- package.yaml
+- README.md
+- stack.yaml
