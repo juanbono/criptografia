@@ -23,6 +23,7 @@ library:
   - bytestring
   - modular-arithmetic
   - vector
+  - microlens-platform
   source-dirs: library
   exposed-modules:
     - Criptografia
@@ -34,11 +35,20 @@ executables:
     - base
     - criptografia
     - optparse-applicative
+    - system-filepath
+    - text
+    - aeson
+    - bytestring
+    - configurator
     - conduit
     - conduit-combinators
     - conduit-extra
     - path
     - path-io
+    - turtle
+    - ansi-terminal
+    - microlens-platform
+    - modular-arithmetic
     ghc-options:
     - -rtsopts
     - -threaded

@@ -1,4 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE DataKinds #-}
 
@@ -6,34 +5,39 @@
  * Plaintext = Zm
  * Key space = All the pairs (a, b) in Zm^2 for which m is prime to a.
  * Encryption function Ek for the key k = (a, b):
-   Ek : Alphabet -> Alphabet, \x. ax + b mod m
+   Ek : Char -> Char, \x. ax + b mod m
 
  * Decryption function Dk for the key k = (a', b):
-   Dk : Alphabet -> Alphabet, \x. a' * (x - b) mod m
+   Dk : Char -> Char, \x. a' * (x - b) mod m
 -}
 
 module Criptografia.Affine
-  ( Key
-  , encrypt
-  , decrypt
-  ) where
+  (affine) where
 
 import Data.Modular
 import qualified Data.Vector.Unboxed as V
+import Criptografia.Cipher
+
+affine :: Cipher (V.Vector Char) Key Char
+affine = MkCipher
+  { _alphabet = affineAlphabet
+  , _encrypt  = affineEncrypt
+  , _decrypt  = affineDecrypt
+  }
 
 type Key = (Int/26, Int/26)
 
-alphabet :: V.Vector Char
-alphabet = V.enumFromTo 'A' 'Z'
+affineAlphabet :: V.Vector Char
+affineAlphabet = V.enumFromTo 'A' 'Z'
 
-encrypt :: Key -> Char -> Char
-encrypt (a, b) c
-  = case V.elemIndex c alphabet of
-      Just x  -> alphabet V.! unMod (a * toMod x + b)
+affineEncrypt :: Key -> Char -> Char
+affineEncrypt (a, b) c
+  = case V.elemIndex c affineAlphabet of
+      Just x  -> affineAlphabet V.! unMod (a * toMod x + b)
       Nothing -> c
 
-decrypt :: Key -> Char -> Char
-decrypt (a, b) c
-  = case V.elemIndex c alphabet of
-      Just x  -> alphabet V.! unMod (inv a * (toMod x - b))
+affineDecrypt :: Key -> Char -> Char
+affineDecrypt (a, b) c
+  = case V.elemIndex c affineAlphabet of
+      Just x  -> affineAlphabet V.! unMod (inv a * (toMod x - b))
       Nothing -> c

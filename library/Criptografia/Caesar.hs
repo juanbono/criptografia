@@ -2,30 +2,36 @@
 {-# LANGUAGE TypeOperators #-}
 
 module Criptografia.Caesar
-  ( cipherWith
-  , decipherWith
-  ) where
+  (caesar) where
 
+import Criptografia.Cipher
 import Data.Modular
 import qualified Data.Vector.Unboxed as V
 
-alphabet :: V.Vector Char
-alphabet = V.enumFromTo 'A' 'Z'
+caesar :: Cipher (V.Vector Char) (Int/26) Char
+caesar = MkCipher
+  { _alphabet = caesarAlphabet
+  , _encrypt  = caesarEncrypt
+  , _decrypt  = caesarDecrypt
+  }
 
-encrypt :: Int/26 -> Char -> Char
-encrypt n c =
-  case V.elemIndex c alphabet of
-    Just i  -> alphabet V.! unMod (toMod i + n)
+caesarAlphabet :: V.Vector Char
+caesarAlphabet = V.enumFromTo 'A' 'Z'
+
+caesarEncrypt :: Int/26 -> Char -> Char
+caesarEncrypt n c =
+  case V.elemIndex c caesarAlphabet of
+    Just i  -> caesarAlphabet V.! unMod (toMod i + n)
     Nothing -> c
 
-decrypt :: Int/26 -> Char -> Char
-decrypt n c =
-  case V.elemIndex c alphabet of
-    Just i  -> alphabet V.! unMod (toMod i - n)
+caesarDecrypt :: Int/26 -> Char -> Char
+caesarDecrypt n c =
+  case V.elemIndex c caesarAlphabet of
+    Just i  -> caesarAlphabet V.! unMod (toMod i - n)
     Nothing -> c
 
 cipherWith :: Int -> Char -> Char
-cipherWith n = encrypt (toMod n)
+cipherWith n = caesarEncrypt (toMod n)
 
 decipherWith :: Int -> Char -> Char
-decipherWith n = decrypt (toMod n)
+decipherWith n = caesarDecrypt (toMod n)

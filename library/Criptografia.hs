@@ -1,9 +1,6 @@
 module Criptografia
-  ( Caesar.cipherWith
-  , Caesar.decipherWith
-  , Affine.decrypt
-  , Affine.encrypt
-  ) where
+  (module Cripto) where
 
-import qualified Criptografia.Caesar as Caesar
-import qualified Criptografia.Affine as Affine
+import Criptografia.Caesar as Cripto
+import Criptografia.Affine as Cripto
+import Criptografia.Cipher as Cripto
