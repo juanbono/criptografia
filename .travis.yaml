@@ -5,7 +5,7 @@ cache:
     - $HOME/.stack
 
 before_install:
-  - nix env -i stack
+  - nix-env -i stack
   
 script:
-  - stack --nix -no-terminal test
+  - stack --nix --no-terminal test
