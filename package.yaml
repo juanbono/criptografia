@@ -73,6 +73,10 @@ tests:
     - criptografia
     - tasty
     - tasty-hspec
+    - tasty-quickcheck
+    - tasty-discover
+    - modular-arithmetic
+    - microlens-platform
     ghc-options:
     - -rtsopts
     - -threaded
@@ -86,6 +90,8 @@ benchmarks:
     - base
     - criptografia
     - criterion
+    - microlens-platform
+    - modular-arithmetic
     ghc-options:
     - -rtsopts
     - -threaded

@@ -2,12 +2,11 @@ module Main where
 
 import Criptografia
 import Conduit
-import Data.Modular
 import Data.Char (toUpper, toLower)
 import Lens.Micro.Platform
 
 caesarWithLength1 :: Char -> Char
-caesarWithLength1 = caesar^.encrypt $ toMod 1
+caesarWithLength1 = caesar^.encrypt $ 1
 
 main :: IO ()
 main
