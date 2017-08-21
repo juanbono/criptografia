@@ -1,0 +1,11 @@
+language: nix
+
+cache:
+  directories:
+    - $HOME/.stack
+
+before_install:
+  - nix env -i stack
+  
+script:
+  - stack --nix -no-terminal test
