@@ -1,0 +1,212 @@
+-- MUGI: Pseudorandom number generator (PRNG) designed for using as a stream cipher.
+-- MUGI has 2 independent parameters:
+-- * 128-bit secret key.
+-- * 128-bit initial vector (this can be public).
+
+-- PANAMA-like keystream generator
+-- The principal part of a PRNG is a set (S, F, f):
+-- where
+--  * S: internal state.
+--  * F: update function.
+--  * f: output filter, which abstracts the output sequence from S.
+-- We call the set (S, F) as an internal-state machine.
+-- And we call a step that the update function is applied as a round.
+-- S(t) refers to the internal state at round t.
+
+-- In the case of PANAMA, the internal state is divided into 2 parts:
+-- * state "a"
+-- * buffer "b"
+
+-- The update function is divided in proportion to the internal state:
+-- * rho: update function of state "a"
+-- * lambda: update function of state "b"
+
+-- Rho function: has a SPN structure. It's similar to a block cipher's round function.
+-- Lambda function: is a linear transformation.
+-- f function: abstracts about half bits of state "a" for each round.
+
+-- SPN: substitution-permutation network
+-- (https://en.wikipedia.org/wiki/Substitution-permutation_network)
+
+-- A PRNG which satisfies above characteristics is called PANAMA-like keystream
+-- generator (PKSG).
+-- Definition: Consider an internal-state machine (a, b, rho, lambda). The keystream
+-- generator which consists of internal state ((a,b), (rho, lambda)) and output filter
+-- f is called PANAMA-like keystream generator if it satisfies the following conditions:
+
+-- (1) rho includes a SPN transformation and uses parts of buffer "b" as a parameter.
+--       a(t+1) = p(a(t), b(t))
+-- (2) lambda is a linear transformation and uses a part of state "a" as a parameter.
+--       b(t+1) = lambda(b(t), a(t))
+-- (3) f outputs a part of state "a" (usually no more than 1/2).
+
+-- Data structure:
+-- The elemental-data size of MUGI is 64-bit, called a unit. Embedding byte data into
+-- a 64-bit word, we adopt bige -endian. For example 8 bytes input data x0,...,x7
+-- is stored into 1 unit as follows:
+--  a = [MSB] x0 <> x1 <> x2 <> ... <> x7 [LSB]
+
+-- Where [MSB] and [LSB] represent the positions of the most significant byte and the
+-- least significant byte, respectively.
+-- On the other hand the output key stream is given as a unit data.
+-- The j-th byte (from the most significant side) of unit a is denoted by aj.
+-- When we use plural subscript. the first subscript specifies unit position and the
+-- second subscript specifies the byte position. For instance in the sequence consists
+-- of unit data B = (bi)i, bi,i means the j-th byte in the i-th unit.
+-- The higher and lower 32-bit data of a unit is denoted by the subscripts "H" and "L"
+-- e.g. (aH <> aL) = a.
+
+-- Finite Field GF(2⁸)
+-- MUGI uses some operations in the finite field GF(2⁸). A finite field has many
+-- different representations. We fixed a characteristic polynomial and represent the
+-- element of G(2⁸) by a polynomial.
+-- We define GF(2⁸) = GF(2)[x]/(theta(x)), there the polynomial theta(x) is given as
+-- follows:
+-- theta(x) = x⁸ + x⁴ + x³ + x + 1 <-> 0x11b
+
+-- Any element in GF(2⁸) is represented by 1-variable polynomial whose coefficients are
+-- e in GF(2) (i.e. the coefficients are in {0, 1}) and the degree is no more than 7.
+-- The binary representation (for implementation purposes) is given by 8-bit data.
+-- The 8-bit string b7 <> b6 <> b5 <> b4 <> b3 <> b2 <> b1 <> b0 is associated to:
+-- b7x⁷ + b6x⁶ + b5x⁵ + b4x⁴ + b3x³ + b2x² b1x + b0
+-- For example: byte datum 0x57 is associated to the bit string 0101 0111, x⁶+x⁴+x²+x+1
+
+-- Addition
+-- The sum of two polynomials over GF(2⁸) is the polynomial whose coefficients are given
+-- by the sum of corresponding coefficients modulo 2. In other words the addition is
+-- calculated by bitwise XOR. For example, the sum of 0x57 and 0xa3 is calculated as
+-- follows:
+-- 0x57 + 0xa3 = (x⁶+ x⁴+x²+x+1) + (x⁷+x⁵+1) = x⁷+x⁶+x⁵+x⁴+x² = 0xf4
+
+
+-- Multiplication
+-- The multiplication in GF(2⁸) can be divided in two steps.
+-- Firstly we give the multiplication of any element f(x) = Σ ai * x^i and x as follows:
+-- x * f(x) = Σ bi*x^(i+1) mod theta(x).
+-- For example, the multiplication of 0x02 and 0x87 is calculated as follows:
+-- 0x02 * 0x87 = x * (x⁷ + x² + x + 1) = x⁸+x³+x²+x = (x⁴+x³+x+1)+x³+x²+x
+-- = x⁴+x²+1 <-> 0x15
+
+-- Inverse
+-- For f,g in GF(2⁸), we call g a inverse of f and denote g = f⁻¹ if there are
+-- a, b in GF(2⁸) that satisfies the following equation:
+-- f * a + g * b = 1 mod theta(x)
+
+-- In the case of GF(2⁸) the inverse of a is given by a⁻¹ = a²⁵⁴.
+
+-- Outline:
+{-
+Input: Secret key K, Initial vector I, Output size n (units)
+Output: Random number sequence Out[i] (0 <= i < n)
+
+Algorithm
+Initialization
+  Step 1. Put secret key K into state a. Then initialize buffer b by running rho.
+  Step 2. Add the initial vector I into state a and initialize state state a by running
+          rho.
+  Step 3. Mix whole internal state by running the update function of MUGI for bringing
+          to completion.
+Random number generation
+  Step 4. Run n rounds updapte function and output a part of the internal state (64-bit)
+          for each round.
+-}
+
+-- Input
+-- MUGI has 2 inputs:
+-- * An 128-bit secret key K.
+-- * An 128-bit initial vector I (public parameter).
+
+-- The higher and lower units of K are denoted by K0 and K1 respectively.
+-- In the same manner, I0 and I1.
+
+-- Internal State
+-- State a:
+-- Consists of 3 units. Each of them is denoted by a0, a1, a2 in rotation. i.e.
+-- a = [Higher] a0 <> a1 <> a2 [Lower]
+
+-- Buffer b:
+-- Consists of 16 units. Each of them is denoted by b0,..., b15 in rotation
+-- in the same manner as the state a.
+
+
+-- Update function f:
+-- In general the update function of PKSG is described as a combination of rho
+-- and lambda. Each of them uses another internal state as a parameter.
+-- In other words, the update function is described as:
+-- (a^(t+1), b^(t+1)) = Update(a^t, b^t) = ((rho(a^t, b^t)), (lambda(b^t, a^t)))
+
+-- Rho: update function of the state a.
+-- It's a kind of target heavy Feistel structure with 2 F-functions and uses
+-- the buffer b as a parameter. The function rho is described as follows:
+-- a0^(t+1) = a1^t
+-- a1^(t+1) = a2^t <+> F(a1^t, b4^t) <+> C1
+-- a2^(t+1) = a0^t <+> F(a1^t, b10^t <<< 17) <+> C2
+
+-- The F-function of MUGI reuses the components of AES (S-box, MDS)
+
+-- Lambda: update function of the buffer b and used as part of the state a as parameter.
+-- Lambda is a linear transformation of b and is described as follows:
+-- bj^(t+1) = b(j-1)^t (j != 0, 4, 10)
+-- b0^(t+1) = b15^t <+> a0^t
+-- b4^(t+1) = b3^t <+> b7^t
+-- b10^(t+1) = b9^t <+> (b13^t <<< 32)
+
+-- Initialization: Is divided in 3 steps:
+-- 1. We initialize the buffer b with a secret key K.
+-- 2. Initialize the state a with a initial vector I.
+-- 3. Mix the whole internal state.
+
+-- 1.
+-- In the first step we set the secret key K into the state "a" as follows:
+-- a0 = K0
+-- a1 = K1
+-- a2 = (K0 <<< 7) <+> (K1 >>> 7) <+> C0
+-- Then iterate running only rho and put a part of each a^t into the buffer b as follows:
+-- b(15-i) = (rho^(i+1)(a, 0))0
+
+-- In above equations rho^i means the i-th iteration of rho and rho(a, 0) means
+-- the input from b is 0. In other words the data stored into the buffer b is not used for this step.
+
+-- 2.
+-- The mixed state a(K) = rho^16(a0, 0) and the initial vector are required.
+-- I is added to the state "a" as follows:
+-- a(K, I)0 = a(K)0 <+> I0
+-- a(K, I)1 = a(K)1 <+> I1
+-- a(K, I)2 = a(K)2 <+> (I0 <<< 7) <+> (I1 >>> 7) <+> C0
+-- Then the state a is mixed again by 16 rounds iteration of rho. The mixed
+-- state a is represented as rho^16(a(K, I), 0).
+
+-- The last step is 16 rounds iteration whole update function Update.
+-- a¹ = Update¹⁶(rho¹⁶(a(K, I), 0), b(K))
+
+-- where the notation b(K) means: buffer b initialized with secret key K.
+
+-- Random number Generation
+-- After the initialization MUGI generates a 64-bit random number and transform the internal state at each round.
+-- The output at round t is denoted by: Out[t] = a2^t. In other words the output
+-- is the lower 64 bits of the state "a" at the beginning of the round process.
+
+-- Components
+-- The F-function adopts 1-round SPN structure and consists of bytewise substitution
+-- (S-box). The S-box: is the same as in AES.
+-- Matrix: The linear transformation of the F-function is the combination of a 4x4
+-- matrix and bytewise shuffling. MUGI uses MDS matrix which is the component of the
+-- AES.
+
+-- F-function: is composition of a key addition (the data addition from the buffer),
+-- a non-linear transformation using the S-box, a linear transformation using MDS
+-- matrix M and byte shuffling. Let denote the input to the F-function as X,
+-- the output as Y. Then the F-function is described as follows:
+-- Y = F(X, B) <=> O = X <+> B, O0 <> O1 <> O2 <> O3 <> O4 <> O5 <> O6 <> O7 = O
+-- Pi = S(Oi) (O <= i < 8),
+-- Ph = P0 <> P1 <> P2 <> P3, Pl = P4 <> P5 <> P6 <> P7,
+-- Qh = M(Ph), Ql = M(Pl)
+-- Q0 <> Q1 <> Q2 <> Q3 = Qh, Q4 <> Q5 <> Q6 <> Q7 = Ql
+-- Y = Q4 <> Q5 <> Q2 <> Q3 <> Q0 <> Q1 <> Q6 <> Q7
+
+-- An Encryption Scheme and Remarks
+-- How to use Keys and Initial Vectors
+-- The output sequence generated by any PRNG is decided by the combination of
+-- the secret key K and the initial vector I. So NEVER USE AN IDENTICAL COMBINATION
+-- TWICE.
+-- Especially you must use a different I when K is fixed.

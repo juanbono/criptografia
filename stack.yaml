@@ -8,4 +8,5 @@ extra-deps:
 - modular-arithmetic-1.2.1.2
 - ratio-int-0.1.2
 - repa-3.4.1.2
+- bitwise-0.1.1.1
 resolver: lts-9.0

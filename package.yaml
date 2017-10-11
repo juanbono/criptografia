@@ -8,7 +8,7 @@ version: '0.0.0'
 license: MIT
 maintainer: Juan Bono
 github: juanbono/criptografia
-synopsis: A new Haskeleton package.
+synopsis: Cryptographic Algorithms
 description: Cryptographic Algorithms
 category: Other
 
@@ -20,10 +20,20 @@ library:
   - hip
   - repa
   - text
+  - vector
+  - bitwise
+  - split
+  - finite-typelits
   - bytestring
   - modular-arithmetic
-  - vector
   - microlens-platform
+  - matrix
+  - linear
+  - hmatrix
+  - containers
+  - vector-sized
+  - largeword
+
   source-dirs: library
   exposed-modules:
     - Criptografia
