@@ -14,8 +14,9 @@ import Data.LargeWord
 import Data.Maybe
 import Data.Finite
 import GHC.TypeLits
-import Data.Bits.Bitwise (fromListBE)
-import Data.List.Split (chunksOf)
+--import Data.Bits.Bitwise (fromListBE)
+--import Data.List.Split (chunksOf)
+import Data.Finite (finite)
 
 type Vector l t = Vec.Vector V.Vector l t
 
@@ -26,6 +27,31 @@ data InternalState
   { stateA :: Vector  3 Unit
   , stateB :: Vector 16 Unit
   } deriving (Show, Eq, Ord)
+
+f :: Unit -> Unit -> Unit
+f = undefined
+
+rho :: InternalState -> Vector 3 Unit
+rho (IState a b) = fromJust $ Vec.fromList [a0, a1, a2]
+  where
+    a0 = a ! 1
+    a1 = (a!2) <+> f (a!1) (b!4) <+> c1
+    a2 = (a!0) <+> f (a!1) (b!10 <<< 17) <+> c2
+
+lambda :: InternalState -> Vector 16 Unit
+lambda state@(IState _ b) = b Vec.// newValues
+  where
+    updateB :: InternalState -> Finite 16 -> Unit
+    updateB (IState a' b') 0 = (b'!15) <+> (a'!0)
+    updateB (IState _ b')  4 = (b'!3) <+> (b'!7)
+    updateB (IState _ b') 10 = (b'!9) <+> (b'!13 <<< 32)
+    updateB (IState _ b')  k = b' ! (k-1)
+
+    newValues :: [(Int, Unit)]
+    newValues = [(fromIntegral i, updateB state i) | i <- (map finite [0..17])]
+
+updateF :: InternalState -> InternalState
+updateF state = IState (rho state) (lambda state)
 
 (>>>) :: Unit -> Unit -> Unit
 register >>> n = Bit.rotateL register (fromIntegral n)
@@ -123,10 +149,10 @@ mul2Table = fromJust . Vec.fromList $
   ]
 
 -- constants
-c0, c1, c2 :: String
-c0 = "0x6A09E667F3BCC908" -- sqrt(2)*2^64
-c1 = "0xBB67AE8584CAA73B" -- sqrt(3)*2^64
-c2 = "0x3C6EF372FE94F82B" -- sqrt(5)*2^64
+c0, c1, c2 :: Unit
+c0 = 0x6A09E667F3BCC908 -- sqrt(2)*2^64
+c1 = 0xBB67AE8584CAA73B -- sqrt(3)*2^64
+c2 = 0x3C6EF372FE94F82B -- sqrt(5)*2^64
 
 -- test vector
 -- example 1.
