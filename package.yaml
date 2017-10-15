@@ -16,9 +16,6 @@ library:
   dependencies:
   - base
   - JuicyPixels
-  - friday
-  - hip
-  - repa
   - text
   - vector
   - bitwise
@@ -27,10 +24,6 @@ library:
   - bytestring
   - modular-arithmetic
   - microlens-platform
-  - matrix
-  - linear
-  - hmatrix
-  - containers
   - vector-sized
   - largeword
 
