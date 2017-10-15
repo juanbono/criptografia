@@ -2,9 +2,11 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE UnicodeSyntax #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE BinaryLiterals #-}
 
 module Criptografia.Mugi where
 
+import Data.Char
 import qualified Data.Vector.Generic.Sized as Vec
 import qualified Data.Vector as V
 import qualified Data.Bits as Bit
@@ -14,13 +16,15 @@ import Data.LargeWord
 import Data.Maybe
 import Data.Finite
 import GHC.TypeLits
+
 --import Data.Bits.Bitwise (fromListBE)
 --import Data.List.Split (chunksOf)
-import Data.Finite (finite)
+import Numeric
 
 type Vector l t = Vec.Vector V.Vector l t
 
 type Unit = Word64
+type Byte = Word8
 
 data InternalState
   = IState
@@ -28,27 +32,81 @@ data InternalState
   , stateB :: Vector 16 Unit
   } deriving (Show, Eq, Ord)
 
+-- rename the // operator for better readability
+updateWith :: Vector 16 Unit -> [(Int, Unit)] -> Vector 16 Unit
+updateWith = (Vec.//)
+
+getByte :: (Num b, Integral a, Bits a) => a -> Int -> b
+getByte num b = fromIntegral $ Bit.shift (relevantBits b num) (shiftNum b)
+    where bitMask x = sum $ map (2^) [8*x-8 .. 8*x-1]
+          relevantBits x n = n .&. bitMask x
+          shiftNum x = 8-8*x
+
+toWord8 :: Unit -> [Byte]
+toWord8 u = [ getByte u i | i <- lst]
+  where lst = reverse [1..8]
+
+fromWord8 :: [Byte] -> Unit
+fromWord8 = undefined
+
+{-
+ F-Function
+Input: X = X0 || X1 || X2 || X3 || X4 || X5 || X6 || X7
+Output: Y
+
+Pi <- S(Xi), (0 <= i < 8)
+let PH = P0 || P1 || P2 || P3
+let PL = P4 || P5 || P6 || P7
+QH <- M(PH)
+QL <- M(PL)
+let QH = Q0 || Q1 || Q2 || Q3
+let QL = Q4 || Q5 || Q6 || Q7
+Y = Q4 || Q5 || Q2 || Q3 || Q0 || Q1 || Q6 || Q7
+-}
+
+p :: [Byte] -> [Byte] -> [Byte]
+p x buffer = do
+  xi <- x
+  bi <- buffer
+  return (xi <+> bi)
+
+q :: [Byte] -> [Byte]
+q pMatrix = [qM!!4,qM!!5,qM!!2, qM!!3,qM!!0,qM!!1,qM!!6,qM!!7]
+  where
+    coerceNum = finite . fromIntegral
+    sboxed = [ sbox x | x <- map coerceNum pMatrix]
+    qh = map (mul2 . coerceNum) $ take 4 sboxed
+    ql = map (mul2 . coerceNum) $ drop 4 sboxed
+    qM = qh ++ ql
+
 f :: Unit -> Unit -> Unit
-f = undefined
+f x y = fromWord8 qMatrix
+  where
+    bytesOfX = toWord8 x
+    bytesOfY = toWord8 y
+    qMatrix = q (p bytesOfX bytesOfY)
+
+showBin :: (Show a, Integral a) => a -> String
+showBin x = showIntAtBase 2 intToDigit x ""
 
 rho :: InternalState -> Vector 3 Unit
 rho (IState a b) = fromJust $ Vec.fromList [a0, a1, a2]
   where
     a0 = a ! 1
-    a1 = (a!2) <+> f (a!1) (b!4) <+> c1
-    a2 = (a!0) <+> f (a!1) (b!10 <<< 17) <+> c2
+    a1 = (a ! 2) <+> f (a ! 1) (b ! 4) <+> c1
+    a2 = (a ! 0) <+> f (a ! 1) (b ! 10 <<< 17) <+> c2
 
 lambda :: InternalState -> Vector 16 Unit
-lambda state@(IState _ b) = b Vec.// newValues
+lambda state@(IState _ b) = b `updateWith` newValues
   where
-    updateB :: InternalState -> Finite 16 -> Unit
-    updateB (IState a' b') 0 = (b'!15) <+> (a'!0)
-    updateB (IState _ b')  4 = (b'!3) <+> (b'!7)
-    updateB (IState _ b') 10 = (b'!9) <+> (b'!13 <<< 32)
-    updateB (IState _ b')  k = b' ! (k-1)
+    updateB (IState a' b') 0 = (b' ! 15) <+> (a' ! 0)
+    updateB (IState _ b')  4 = (b' ! 3)  <+> (b' ! 7)
+    updateB (IState _ b') 10 = (b' ! 9)  <+> (b' ! 13 <<< 32)
+    updateB (IState _ b')  k = b' ! (k - 1)
 
-    newValues :: [(Int, Unit)]
-    newValues = [(fromIntegral i, updateB state i) | i <- (map finite [0..17])]
+    newValues = [ (fromIntegral i, updateB state i)
+                | i <- map finite [0..17]
+                ]
 
 updateF :: InternalState -> InternalState
 updateF state = IState (rho state) (lambda state)
@@ -68,10 +126,10 @@ register <<< n = Bit.rotateR register (fromIntegral n)
 (!) :: ∀ n t. KnownNat n => Vector n t -> Finite n -> t
 v ! i = Vec.index v i
 
-sbox :: Finite 256 -> Word128
+sbox :: Finite 256 -> Byte
 sbox x = sboxTable ! x
 
-sboxTable :: Vector 256 Word128
+sboxTable :: Vector 256 Byte
 sboxTable = fromJust . Vec.fromList $
   [ 0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5
   , 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76
@@ -107,12 +165,12 @@ sboxTable = fromJust . Vec.fromList $
   , 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16
   ]
 
-mul2 :: Finite 256 -> Word128
+mul2 :: Finite 256 -> Byte
 mul2 x = mul2Table ! x
 
 -- multiplication table of 0x02
 -- given as follows: 0x02 * x = mul2[x]
-mul2Table :: Vector 256 Word128
+mul2Table :: Vector 256 Byte
 mul2Table = fromJust . Vec.fromList $
   [ 0x00, 0x02, 0x04, 0x06, 0x08, 0x0a, 0x0c, 0x0e
   , 0x10, 0x12, 0x14, 0x16, 0x18, 0x1a, 0x1c, 0x1e
@@ -153,41 +211,3 @@ c0, c1, c2 :: Unit
 c0 = 0x6A09E667F3BCC908 -- sqrt(2)*2^64
 c1 = 0xBB67AE8584CAA73B -- sqrt(3)*2^64
 c2 = 0x3C6EF372FE94F82B -- sqrt(5)*2^64
-
--- test vector
--- example 1.
-
-key1 :: Vector 16 Word128
-key1 = Vec.replicate 0
-
-iv1 :: Vector 16 Word128
-iv1 = Vec.replicate 0
-
-output1 :: [Integer]
-output1
-  = [
-
-    ]
-
--- example 2
-key2 :: Vector 16 Word128
-key2 = fromJust . Vec.fromList $
-  [ 0x00, 0x01, 0x02, 0x03
-  , 0x04, 0x05, 0x06, 0x07
-  , 0x08, 0x09, 0x0a, 0x0b
-  , 0x0c, 0x0d, 0x0e, 0x0f
-  ]
-
-iv2 :: Vector 16 Word128
-iv2 = fromJust . Vec.fromList $
-  [ 0xf0, 0xe0, 0xd0, 0xc0
-  , 0xb0, 0xa0, 0x90, 0x80
-  , 0x70, 0x60, 0x50, 0x40
-  , 0x30, 0x20, 0x10, 0x00
-  ]
-
-output2 :: [Integer]
-output2
-  = [
-
-    ]

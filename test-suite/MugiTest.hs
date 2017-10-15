@@ -1,2 +1,46 @@
+
 module MugiTest where
+
+import Criptografia.Mugi
+
+
+-- test vector
+-- example 1.
+
+key1 :: Vector 16 Word128
+key1 = Vec.replicate 0
+
+iv1 :: Vector 16 Word128
+iv1 = Vec.replicate 0
+
+output1 :: [Integer]
+output1
+  = [
+
+    ]
+
+-- example 2
+key2 :: Vector 16 Word128
+key2 = fromJust . Vec.fromList $
+  [ 0x00, 0x01, 0x02, 0x03
+  , 0x04, 0x05, 0x06, 0x07
+  , 0x08, 0x09, 0x0a, 0x0b
+  , 0x0c, 0x0d, 0x0e, 0x0f
+  ]
+
+iv2 :: Vector 16 Word128
+iv2 = fromJust . Vec.fromList $
+  [ 0xf0, 0xe0, 0xd0, 0xc0
+  , 0xb0, 0xa0, 0x90, 0x80
+  , 0x70, 0x60, 0x50, 0x40
+  , 0x30, 0x20, 0x10, 0x00
+  ]
+
+output2 :: [Integer]
+output2
+  = [
+
+    ]
+
+
 
