@@ -5,41 +5,42 @@
 
 module Criptografia.Mugi where
 
-import Data.Vector.Generic.Sized (fromList)
-import Data.Maybe
-import Data.Finite
 import Criptografia.Internal.Mugi
+import Data.Vector.Generic.Sized (fromList)
+import Data.Maybe (fromJust)
+import Data.Finite (finite)
+import Data.Word (Word8, Word64)
 
-p :: [Byte] -> [Byte] -> [Byte]
+p :: [Word8] -> [Word8] -> [Word8]
 p x buffer = do
   xi <- x
   bi <- buffer
   return (xi <+> bi)
 
-q :: [Byte] -> [Byte]
-q pMatrix = [qM!!4,qM!!5,qM!!2, qM!!3,qM!!0,qM!!1,qM!!6,qM!!7]
+q :: [Word8] -> [Word8]
+q pMatrix = fromJust $ rearrange is (qh ++ ql)
   where
     coerceNum = finite . fromIntegral
-    sboxed = [ sbox x | x <- map coerceNum pMatrix]
+    sboxed = [ sbox x | x <- map coerceNum pMatrix ]
     qh = map (mul2 . coerceNum) $ take 4 sboxed
     ql = map (mul2 . coerceNum) $ drop 4 sboxed
-    qM = qh ++ ql
+    is = [4, 5, 2, 3, 0, 1, 6, 7]
 
-f :: Unit -> Unit -> Unit
+f :: Word64 -> Word64 -> Word64
 f x y = fromByte qMatrix
   where
     bytesOfX = toByte x
     bytesOfY = toByte y
     qMatrix = q (p bytesOfX bytesOfY)
 
-ρ :: IState -> Vector 3 Unit
+ρ :: IState -> Vector 3 Word64
 ρ (IState a b) = fromJust $ fromList [a0, a1, a2]
   where
     a0 = a ! 1
     a1 = (a ! 2) <+> f (a ! 1) (b ! 4) <+> c1
     a2 = (a ! 0) <+> f (a ! 1) (b ! 10 <<< 17) <+> c2
 
-λ :: IState -> Vector 16 Unit
+λ :: IState -> Vector 16 Word64
 λ state@(IState _ b) = b `updateWith` newValues
   where
     updateB (IState a' b') 0 = (b' ! 15) <+> (a' ! 0)

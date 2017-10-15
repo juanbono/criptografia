@@ -7,7 +7,6 @@ module Criptografia.Internal.Mugi
   ( (>>>)
   , (<<<)
   , (<+>)
-  , (/\)
   , (!)
   , sbox
   , mul2
@@ -15,13 +14,12 @@ module Criptografia.Internal.Mugi
   , c1
   , c2
   , Vector
-  , Unit
-  , Byte
   , fromByte
   , toByte
   , updateWith
   , IState (..)
   , showBin
+  , rearrange
   ) where
 
 import qualified Data.Vector.Generic.Sized as Vec
@@ -37,62 +35,62 @@ import Data.Char
 
 data IState
   = IState
-  { stateA :: Vector  3 Unit
-  , stateB :: Vector 16 Unit
+  { stateA :: Vector  3 Word64
+  , stateB :: Vector 16 Word64
   } deriving (Show, Eq, Ord)
 
 type Vector l t = Vec.Vector V.Vector l t
 
-type Unit = Word64
-type Byte = Word8
-
 -- rename the // operator for better readability
-updateWith :: Vector 16 Unit -> [(Int, Unit)] -> Vector 16 Unit
+updateWith :: Vector 16 Word64 -> [(Int, Word64)] -> Vector 16 Word64
 updateWith = (Vec.//)
-
 
 showBin :: (Show a, Integral a) => a -> String
 showBin x = showIntAtBase 2 intToDigit x ""
 
 getByte :: (Num b, Integral a, Bits a) => a -> Int -> b
 getByte num b = fromIntegral $ Bit.shift (relevantBits b num) (shiftNum b)
-    where bitMask x = sum $ map (2^) [8*x-8 .. 8*x-1]
-          relevantBits x n = n /\ bitMask x
-          shiftNum x = 8-8*x
+    where bitMask x = sum $ map (2^) [8*x-8 .. 8*x-1] -- use Bit.bit or Bit.mask
+          relevantBits x n = n .&. bitMask x
+          shiftNum x = 8-8*x -- look another way to do it
 
-toByte :: Unit -> [Byte]
+toByte :: Word64 -> [Word8]
 toByte u = [ getByte u i | i <- lst ]
   where lst = reverse [1..8]
 
-fromByte :: [Byte] -> Unit
-fromByte = undefined
+fromByte :: [Word8] -> Word64
+fromByte = undefined -- TODO
 
-(>>>) :: Unit -> Unit -> Unit
+(>>>) :: Word64 -> Word64 -> Word64
 register >>> n = Bit.rotateL register (fromIntegral n)
 
-(<<<) :: Unit -> Unit -> Unit
+(<<<) :: Word64 -> Word64 -> Word64
 register <<< n = Bit.rotateR register (fromIntegral n)
 
 (<+>) :: Bit.Bits a => a -> a -> a
 (<+>) = Bit.xor
 
-(/\) :: Bit.Bits a => a -> a -> a
-(/\) = (.&.)
-
 (!) :: ∀ n t. KnownNat n => Vector n t -> Finite n -> t
 v ! i = Vec.index v i
 
+rearrange :: [Int] -> [a] -> Maybe [a]
+rearrange indices xs
+  = if length indices == length xs
+    then Just $ go indices xs []
+    else Nothing
+  where go [] _ acc = acc
+        go (i:is) as acc = (as !! i) : go is xs acc
 
 -- constants
-c0, c1, c2 :: Unit
+c0, c1, c2 :: Word64
 c0 = 0x6A09E667F3BCC908 -- sqrt(2)*2^64
 c1 = 0xBB67AE8584CAA73B -- sqrt(3)*2^64
 c2 = 0x3C6EF372FE94F82B -- sqrt(5)*2^64
 
-sbox :: Finite 256 -> Byte
+sbox :: Finite 256 -> Word8
 sbox x = sboxTable ! x
 
-sboxTable :: Vector 256 Byte
+sboxTable :: Vector 256 Word8
 sboxTable = fromJust . Vec.fromList $
   [ 0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5
   , 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76
@@ -128,12 +126,12 @@ sboxTable = fromJust . Vec.fromList $
   , 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16
   ]
 
-mul2 :: Finite 256 -> Byte
+mul2 :: Finite 256 -> Word8
 mul2 x = mul2Table ! x
 
 -- multiplication table of 0x02
 -- given as follows: 0x02 * x = mul2[x]
-mul2Table :: Vector 256 Byte
+mul2Table :: Vector 256 Word8
 mul2Table = fromJust . Vec.fromList $
   [ 0x00, 0x02, 0x04, 0x06, 0x08, 0x0a, 0x0c, 0x0e
   , 0x10, 0x12, 0x14, 0x16, 0x18, 0x1a, 0x1c, 0x1e
