@@ -23,10 +23,9 @@ library:
   - finite-typelits
   - bytestring
   - modular-arithmetic
-  - microlens-platform
+  - lens
   - vector-sized
   - largeword
-  - bv
 
   source-dirs: library
   exposed-modules:
@@ -59,8 +58,8 @@ executables:
     - path-io
     - turtle
     - ansi-terminal
-    - microlens-platform
     - modular-arithmetic
+    - lens
     ghc-options:
     - -rtsopts
     - -threaded
@@ -88,7 +87,7 @@ tests:
     - tasty-quickcheck
     - tasty-discover
     - modular-arithmetic
-    - microlens-platform
+    - lens
     ghc-options:
     - -rtsopts
     - -threaded

@@ -18,25 +18,18 @@ module Criptografia.Mugi.Internal
   , toByte
   , updateWith
   , IState (..)
-  , showBin
   , rearrange
   ) where
 
 import qualified Data.Vector.Generic.Sized as Vec
 import qualified Data.Vector as V
 import qualified Data.Bits as Bit
-import Data.Bits
 import Data.Word
 import Data.Maybe
 import Data.Finite
 import GHC.TypeLits
-import Numeric
-import Data.Char
-import qualified Data.BitVector as BV
-
-
-word8_355 :: BV.BV
-word8_355 = BV.bitVec 8 254
+import Data.Bits.Lens
+import Control.Lens ((^.))
 
 data IState
   = IState
@@ -50,24 +43,16 @@ type Vector l t = Vec.Vector V.Vector l t
 updateWith :: Vector 16 Word64 -> [(Int, Word64)] -> Vector 16 Word64
 updateWith = (Vec.//)
 
-showBin :: (Show a, Integral a) => a -> String
-showBin x = showIntAtBase 2 intToDigit x ""
-
-bitMask :: (Num a, Integral a1) => a1 -> a
-bitMask x = sum $ map (2^) [8*x-8 .. 8*x-1]
-
-getByte :: (Num b, Integral a, Bits a) => a -> Int -> b
-getByte num b = fromIntegral $ Bit.shift (relevantBits b num) (shiftNum b)
-    where bitMask x = sum $ map (2^) [8*x-8 .. 8*x-1] -- use Bit.bit or Bit.mask
-          relevantBits x n = n .&. bitMask x
-          shiftNum x = 8-8*x -- look another way to do it
-
 toByte :: Word64 -> [Word8]
-toByte u = [ getByte u i | i <- lst ]
-  where lst = reverse [1..8]
+toByte w = [ w^.byteAt i | i <- lst]
+  where lst = reverse [0..7]
 
 fromByte :: [Word8] -> Word64
-fromByte = undefined -- TODO
+fromByte xs = sum $ map fromIntegral values
+  where
+    xs' = map fromIntegral xs :: [Integer]
+    powersOf256 = [256^i | i <- reverse [0..7] :: [Integer]]
+    values = zipWith (*) xs' powersOf256
 
 (>>>) :: Word64 -> Word64 -> Word64
 register >>> n = Bit.rotateL register (fromIntegral n)

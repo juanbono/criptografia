@@ -6,20 +6,15 @@ import Criptografia
 import Test.Tasty
 import Test.Tasty.QuickCheck
 import Test.Tasty.Hspec
-import Data.Maybe
 
--- TODO : test fromByte
--- TODO : test toByte
 -- TODO : test (>>>)
 -- TODO : test (<<<)
--- TODO : test getByte
--- TODO : test rearrange
 -- TODO : test mul2
 -- TODO : test sbox
 
 
-specs :: Spec
-specs
+rearrangeSpecs :: Spec
+rearrangeSpecs
   = describe "rearrange" $ do
       it "rearranges the elements correctly" $
         let xs = [0,1,2] :: [Int]
@@ -39,6 +34,18 @@ specs
             is = []
         in rearrange is xs `shouldBe` Nothing
 
-test_mugi :: IO TestTree
-test_mugi
-  = testSpec "MUGI Internal Module" specs
+test_rearrange :: IO TestTree
+test_rearrange
+  = testSpec "MUGI Internal Module" rearrangeSpecs
+
+
+test_toByte_fromByte :: TestTree
+test_toByte_fromByte
+  = testGroup "fromByte and toByte"
+    [ testProperty "fromByte . toByte = id" $
+      \x -> (fromByte . toByte) x == x
+    , testProperty "length (toByte x) = 8" $
+      \x -> length (toByte x) == 8
+    , testProperty "forall x in (toByte x). x < 256" $
+      \x -> not $ any (>256) (fromIntegral <$> toByte x)
+    ]

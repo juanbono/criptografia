@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
+
 module Criptografia.Cipher
   ( Cipher (..)
   -- * Lenses
@@ -7,7 +8,7 @@ module Criptografia.Cipher
   , decrypt
   ) where
 
-import Lens.Micro.Platform
+import Control.Lens
 
 data Cipher a k c = MkCipher
   { _alphabet :: a

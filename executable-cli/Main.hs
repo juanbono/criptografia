@@ -3,7 +3,7 @@ module Main where
 import Criptografia
 import Conduit
 import Data.Char (toUpper, toLower)
-import Lens.Micro.Platform
+import Control.Lens
 
 caesarWithLength1 :: Char -> Char
 caesarWithLength1 = caesar^.encrypt $ 1

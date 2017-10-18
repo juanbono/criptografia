@@ -3,7 +3,7 @@ module AffineTest where
 import Test.Tasty
 import Test.Tasty.QuickCheck
 import Criptografia
-import Lens.Micro.Platform
+import Control.Lens
 
 test_affine :: TestTree
 test_affine
