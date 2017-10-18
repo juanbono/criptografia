@@ -3,7 +3,7 @@
 {-# LANGUAGE UnicodeSyntax #-}
 {-# LANGUAGE BinaryLiterals #-}
 
-module Criptografia.Internal.Mugi
+module Criptografia.Mugi.Internal
   ( (>>>)
   , (<<<)
   , (<+>)
@@ -32,6 +32,11 @@ import Data.Finite
 import GHC.TypeLits
 import Numeric
 import Data.Char
+import qualified Data.BitVector as BV
+
+
+word8_355 :: BV.BV
+word8_355 = BV.bitVec 8 254
 
 data IState
   = IState
@@ -47,6 +52,9 @@ updateWith = (Vec.//)
 
 showBin :: (Show a, Integral a) => a -> String
 showBin x = showIntAtBase 2 intToDigit x ""
+
+bitMask :: (Num a, Integral a1) => a1 -> a
+bitMask x = sum $ map (2^) [8*x-8 .. 8*x-1]
 
 getByte :: (Num b, Integral a, Bits a) => a -> Int -> b
 getByte num b = fromIntegral $ Bit.shift (relevantBits b num) (shiftNum b)

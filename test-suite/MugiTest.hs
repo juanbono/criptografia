@@ -3,7 +3,7 @@ module MugiTest where
 
 import Criptografia.Mugi
 
-
+{-
 -- test vector
 -- example 1.
 
@@ -42,5 +42,5 @@ output2
 
     ]
 
-
+-}
 

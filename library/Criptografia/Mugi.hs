@@ -5,7 +5,7 @@
 
 module Criptografia.Mugi where
 
-import Criptografia.Internal.Mugi
+import Criptografia.Mugi.Internal
 import Data.Vector.Generic.Sized (fromList)
 import Data.Maybe (fromJust)
 import Data.Finite (finite)

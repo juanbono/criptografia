@@ -26,6 +26,7 @@ library:
   - microlens-platform
   - vector-sized
   - largeword
+  - bv
 
   source-dirs: library
   exposed-modules:
@@ -36,11 +37,19 @@ executables:
   cripto-cli:
     dependencies:
     - base
+    - JuicyPixels
+    - bitwise
+    - split
+    - bmp
+    - finite-typelits
     - criptografia
     - optparse-applicative
     - system-filepath
     - text
+    - mono-traversable
     - aeson
+    - conduit-combinators
+    - resourcet
     - bytestring
     - configurator
     - conduit
