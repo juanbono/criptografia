@@ -2,7 +2,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE UnicodeSyntax #-}
 {-# LANGUAGE BinaryLiterals #-}
-
+{-# LANGUAGE OverloadedStrings #-}
 module Criptografia.Mugi.Internal
   ( (>>>)
   , (<<<)
@@ -19,17 +19,20 @@ module Criptografia.Mugi.Internal
   , updateWith
   , IState (..)
   , rearrange
+  , fromBS
+  , toBS
   ) where
 
 import qualified Data.Vector.Generic.Sized as Vec
-import qualified Data.Vector as V
+import qualified Data.ByteString.Lazy as B
 import qualified Data.Bits as Bit
-import Data.Word
-import Data.Maybe
-import Data.Finite
-import GHC.TypeLits
-import Data.Bits.Lens
+import qualified Data.Vector as V
 import Control.Lens ((^.))
+import Data.Bits.Lens
+import GHC.TypeLits
+import Data.Finite
+import Data.Maybe
+import Data.Word
 
 data IState
   = IState
@@ -50,9 +53,15 @@ toByte w = [ w^.byteAt i | i <- lst]
 fromByte :: [Word8] -> Word64
 fromByte xs = sum $ map fromIntegral values
   where
-    xs' = map fromIntegral xs :: [Integer]
-    powersOf256 = [256^i | i <- reverse [0..7] :: [Integer]]
-    values = zipWith (*) xs' powersOf256
+    xs' = map fromIntegral xs :: [Word8]
+    powersOf256 = [256^i | i <- reverse [0..7]] :: [Word64]
+    values = zipWith (*) (map fromIntegral xs') powersOf256 :: [Word64]
+
+fromBS :: B.ByteString -> Word64
+fromBS = fromByte . B.unpack
+
+toBS :: Word64 -> B.ByteString
+toBS = B.pack . filter (/= 0) . toByte
 
 (>>>) :: Word64 -> Word64 -> Word64
 register >>> n = Bit.rotateL register (fromIntegral n)

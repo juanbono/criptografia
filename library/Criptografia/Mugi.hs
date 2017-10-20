@@ -10,6 +10,7 @@ import Data.Vector.Generic.Sized (fromList)
 import Data.Maybe (fromJust)
 import Data.Finite (finite)
 import Data.Word (Word8, Word64)
+import Data.LargeWord (Word128)
 
 p :: [Word8] -> [Word8] -> [Word8]
 p x buffer = do
@@ -55,3 +56,14 @@ f x y = fromByte qMatrix
 updateF :: IState -> IState
 updateF state = IState (ρ state) (λ state)
 
+init :: Word128 -> Word128 -> Word64
+init = undefined
+
+mugi :: Word128 -> Word128 -> Word64
+mugi = undefined
+
+mugiEncrypt :: Word128 -> Word128 -> Word64 -> Word64
+mugiEncrypt = undefined
+
+mugiDecrypt :: Word128 -> Word128 -> Word64 -> Word64
+mugiDecrypt = undefined

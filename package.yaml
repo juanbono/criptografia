@@ -40,6 +40,7 @@ executables:
     - bitwise
     - split
     - bmp
+    - bytestring
     - finite-typelits
     - criptografia
     - optparse-applicative
@@ -88,6 +89,8 @@ tests:
     - tasty-discover
     - modular-arithmetic
     - lens
+    - bytestring
+    - bytestring-arbitrary
     ghc-options:
     - -rtsopts
     - -threaded
