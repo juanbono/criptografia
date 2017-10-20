@@ -1,4 +1,5 @@
-# [criptografia]()
+# [criptografia]() 
+[![Build Status](https://travis-ci.org/juanbono/criptografia.svg?branch=master)](https://travis-ci.org/juanbono/criptografia)
 
 Some cryptography algorithms in Haskell.
 
