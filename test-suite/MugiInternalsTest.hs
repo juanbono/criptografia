@@ -7,14 +7,12 @@ import Criptografia
 import Test.Tasty
 import Test.Tasty.QuickCheck
 import Test.Tasty.Hspec
+import Test.Tasty.HUnit
 import Data.ByteString.Arbitrary
+import Data.LargeWord
+import Control.Monad
 import qualified Data.ByteString.Lazy as B
 import qualified Data.ByteString as BS
-
--- TODO : test (>>>)
--- TODO : test (<<<)
--- TODO : test mul2
--- TODO : test sbox
 
 rearrangeSpecs :: Spec
 rearrangeSpecs
@@ -55,7 +53,33 @@ test_toByte_fromByte
     , testProperty "forall x in (toByte x). x < 256" $
       let sizeLimit = 256 :: Integer in
       \x -> not $ any (> sizeLimit) (fromIntegral <$> toByte x)
+
+    -- Word128 tests
+    , testProperty "fromByte128 . toByte128 = id" $
+      \x -> (fromByte128 . toByte128) x == x
+
+    , testProperty "length (toByte128 x) = 16" $
+      \x -> length (toByte128 x) == 16
+
+    , testProperty "forall x in (toByte128 x). x < 256" $
+      let sizeLimit = 256 :: Integer in
+      \x -> not $ any (> sizeLimit) (fromIntegral <$> toByte128 x)
+
     ]
+
+test_loHalf_hiHalf :: TestTree
+test_loHalf_hiHalf
+  = testGroup "loHalf and hiHalf (Word128)"
+
+  [ testCase "hiHalf (secret key)" $ 0x0001020304050607 @=? hiHalf wordSk
+  , testCase "loHalf (secret key)" $ 0x08090a0b0c0d0e0f @=? loHalf wordSk
+  ]
+  where
+    secretKey = [ 0x00, 0x01, 0x02, 0x03
+                , 0x04, 0x05, 0x06, 0x07
+                , 0x08, 0x09, 0x0a, 0x0b
+                , 0x0c, 0x0d, 0x0e, 0x0f ]
+    wordSk = fromByte128 secretKey
 
 test_toBS_fromBS :: TestTree
 test_toBS_fromBS
@@ -76,8 +100,12 @@ newtype ArbByteString8 = ABS8 { fromABS8 :: BS.ByteString }
 instance Arbitrary ArbByteString8 where
   arbitrary = do
     len <- choose (0, 8)
-    let filterNuls bs = packAndtoStrict $ filter (/= nulAscii) (toListOfBytes bs)
+    let filterNuls bs = packAndtoStrict (toListOfBytes bs) -- corregir manejo de nul
+    --filter (/= nulAscii) (toListOfBytes bs)
           where packAndtoStrict = B.toStrict . B.pack
                 toListOfBytes = toByte . fromBS . B.fromStrict
-                nulAscii = 0
+                -- nulAscii = 0 :: Integer
     (ABS8 . filterNuls) <$> fastRandBs len
+
+instance (Arbitrary a, Arbitrary b) => Arbitrary (LargeKey a b) where
+   arbitrary = liftM2 LargeKey arbitrary arbitrary

@@ -1,13 +1,16 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE UnicodeSyntax #-}
-{-# LANGUAGE BinaryLiterals #-}
-{-# LANGUAGE OverloadedStrings #-}
+
 module Criptografia.Mugi.Internal
   ( (>>>)
   , (<<<)
+  , (⊕)
   , (<+>)
   , (!)
+  , stateA
+  , stateB
   , sbox
   , mul2
   , c0
@@ -16,61 +19,83 @@ module Criptografia.Mugi.Internal
   , Vector
   , fromByte
   , toByte
+  , fromByte128
+  , toByte128
   , updateWith
   , IState (..)
+  , emptyBuffer
   , rearrange
   , fromBS
   , toBS
+  , unsafeFromList
   ) where
 
 import qualified Data.Vector.Generic.Sized as Vec
 import qualified Data.ByteString.Lazy as B
 import qualified Data.Bits as Bit
 import qualified Data.Vector as V
-import Control.Lens ((^.))
+import Control.Lens ((^.), makeLenses)
 import Data.Bits.Lens
 import GHC.TypeLits
 import Data.Finite
 import Data.Maybe
 import Data.Word
-
-data IState
-  = IState
-  { stateA :: Vector  3 Word64
-  , stateB :: Vector 16 Word64
-  } deriving (Show, Eq, Ord)
+import Data.LargeWord
 
 type Vector l t = Vec.Vector V.Vector l t
 
--- rename the // operator for better readability
+data IState
+  = IState
+  { _stateA :: Vector  3 Word64
+  , _stateB :: Vector 16 Word64
+  } deriving (Show, Eq, Ord)
+
+makeLenses ''IState
+
+emptyBuffer :: Vector 16 Word64
+emptyBuffer = Vec.replicate 0
+
+-- rename Data.Vector.Generic.Sized.(//) operator for better readability
 updateWith :: Vector 16 Word64 -> [(Int, Word64)] -> Vector 16 Word64
 updateWith = (Vec.//)
 
+toByte128 :: Word128 -> [Word8]
+toByte128 w = [w^.byteAt i | i <- lst ]
+  where lst = reverse [0..15]
+
+fromByte128 :: [Word8] -> Word128
+fromByte128 xs = fromIntegral $ sum values
+  where
+    powersOf256 = [256^i | i <- reverse [0..15] :: [Integer]]
+    values = zipWith (*) (map fromIntegral xs) powersOf256 :: [Integer]
+
 toByte :: Word64 -> [Word8]
-toByte w = [ w^.byteAt i | i <- lst]
+toByte w = [ w^.byteAt i | i <- lst ]
   where lst = reverse [0..7]
 
 fromByte :: [Word8] -> Word64
 fromByte xs = sum $ map fromIntegral values
   where
-    xs' = map fromIntegral xs :: [Word8]
-    powersOf256 = [256^i | i <- reverse [0..7]] :: [Word64]
-    values = zipWith (*) (map fromIntegral xs') powersOf256 :: [Word64]
+    powersOf256 = [256^i | i <- reverse [0..7] :: [Word64]]
+    values = zipWith (*) (map fromIntegral xs) powersOf256 :: [Word64]
 
 fromBS :: B.ByteString -> Word64
 fromBS = fromByte . B.unpack
 
 toBS :: Word64 -> B.ByteString
-toBS = B.pack . filter (/= 0) . toByte
+toBS = B.pack  . toByte
 
 (>>>) :: Word64 -> Word64 -> Word64
-register >>> n = Bit.rotateL register (fromIntegral n)
+register >>> n = Bit.rotateR register (fromIntegral n)
 
 (<<<) :: Word64 -> Word64 -> Word64
-register <<< n = Bit.rotateR register (fromIntegral n)
+register <<< n = Bit.rotateL register (fromIntegral n)
+
+(⊕) :: Bit.Bits a => a -> a -> a
+(⊕) = Bit.xor
 
 (<+>) :: Bit.Bits a => a -> a -> a
-(<+>) = Bit.xor
+(<+>) = (⊕)
 
 (!) :: ∀ n t. KnownNat n => Vector n t -> Finite n -> t
 v ! i = Vec.index v i
@@ -83,17 +108,20 @@ rearrange indices xs
   where go [] _ acc = acc
         go (i:is) as acc = (as !! i) : go is xs acc
 
+unsafeFromList :: KnownNat n => [a] -> Vector n a
+unsafeFromList = fromJust . Vec.fromList
+
 -- constants
 c0, c1, c2 :: Word64
-c0 = 0x6A09E667F3BCC908 -- sqrt(2)*2^64
-c1 = 0xBB67AE8584CAA73B -- sqrt(3)*2^64
-c2 = 0x3C6EF372FE94F82B -- sqrt(5)*2^64
+c0 = 0x6a09e667f3bcc908 -- sqrt(2)*2^64
+c1 = 0xbb67ae8584caa73b -- sqrt(3)*2^64
+c2 = 0x3c6ef372fe94f82b -- sqrt(5)*2^64
 
 sbox :: Finite 256 -> Word8
 sbox x = sboxTable ! x
 
 sboxTable :: Vector 256 Word8
-sboxTable = fromJust . Vec.fromList $
+sboxTable = unsafeFromList
   [ 0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5
   , 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76
   , 0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0
@@ -134,7 +162,7 @@ mul2 x = mul2Table ! x
 -- multiplication table of 0x02
 -- given as follows: 0x02 * x = mul2[x]
 mul2Table :: Vector 256 Word8
-mul2Table = fromJust . Vec.fromList $
+mul2Table = unsafeFromList
   [ 0x00, 0x02, 0x04, 0x06, 0x08, 0x0a, 0x0c, 0x0e
   , 0x10, 0x12, 0x14, 0x16, 0x18, 0x1a, 0x1c, 0x1e
   , 0x20, 0x22, 0x24, 0x26, 0x28, 0x2a, 0x2c, 0x2e

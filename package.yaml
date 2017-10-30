@@ -12,21 +12,21 @@ synopsis: Cryptographic Algorithms
 description: Cryptographic Algorithms
 category: Other
 
+dependencies:
+  - vector-sized
+  - bytestring
+  - largeword
+  - lens
+  - mtl
+  - modular-arithmetic
+
 library:
   dependencies:
   - base
-  - JuicyPixels
-  - text
   - vector
-  - bitwise
-  - split
   - finite-typelits
-  - bytestring
-  - modular-arithmetic
-  - lens
-  - vector-sized
-  - largeword
-
+  - JuicyPixels
+  - bmp
   source-dirs: library
   exposed-modules:
     - Criptografia
@@ -36,21 +36,13 @@ executables:
   cripto-cli:
     dependencies:
     - base
-    - JuicyPixels
-    - bitwise
-    - split
-    - bmp
-    - bytestring
     - finite-typelits
     - criptografia
     - optparse-applicative
     - system-filepath
-    - text
     - mono-traversable
-    - aeson
     - conduit-combinators
     - resourcet
-    - bytestring
     - configurator
     - conduit
     - conduit-combinators
@@ -59,8 +51,6 @@ executables:
     - path-io
     - turtle
     - ansi-terminal
-    - modular-arithmetic
-    - lens
     ghc-options:
     - -rtsopts
     - -threaded
@@ -86,10 +76,8 @@ tests:
     - tasty
     - tasty-hspec
     - tasty-quickcheck
+    - tasty-hunit
     - tasty-discover
-    - modular-arithmetic
-    - lens
-    - bytestring
     - bytestring-arbitrary
     ghc-options:
     - -rtsopts
@@ -104,8 +92,6 @@ benchmarks:
     - base
     - criptografia
     - criterion
-    - microlens-platform
-    - modular-arithmetic
     ghc-options:
     - -rtsopts
     - -threaded
