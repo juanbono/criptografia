@@ -104,7 +104,7 @@ initTests
   , testCase "mixing with rho - 1" $ stateAfterMix @=? v2
   , testCase "secondStep: IV input" $ stateAfterIVInput @=? v3
   , testCase "mixing with rho - 2" $ stateAfterSecondMixing @=? v4
---  , testCase "thirdStep" $ stateAfterInit @=? v5
+  , testCase "thirdStep" $ stateAfterInit @=? v5
   ] where
   v1 = firstStep secret
   v2 = mixing v1

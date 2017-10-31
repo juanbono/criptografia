@@ -50,7 +50,7 @@ f a b = fromByte . q $ p (toByte a) (toByte b)
     updateB (IState _ b')  k = b' ! (k - 1)
 
     newValues = [ (fromIntegral i, updateB state i)
-                | i <- map finite [0..17]
+                | i <- map finite [0..15]
                 ]
 
 updateF :: IState -> IState
@@ -80,7 +80,7 @@ ivInput (IState a b) iv = IState a1 b
     a1 = unsafeFromList [a10, a11, a12]
 
 thirdStep :: IState -> IState
-thirdStep = undefined
+thirdStep s = last . take 17 $ iterate updateF s
 
 init :: Word128 -> Word128 -> IState
 init k iv = undefined
