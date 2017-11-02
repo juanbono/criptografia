@@ -19,7 +19,7 @@ dependencies:
   - lens
   - mtl
   - modular-arithmetic
-
+  - simple-reflect
 library:
   dependencies:
   - base

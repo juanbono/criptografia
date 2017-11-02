@@ -69,6 +69,7 @@ fromByte128 xs = fromIntegral $ sum values
     powersOf256 = [256^i | i <- reverse [0..15] :: [Integer]]
     values = zipWith (*) (map fromIntegral xs) powersOf256 :: [Integer]
 
+-- refactor
 toByte :: Word64 -> [Word8]
 toByte w = [ w^.byteAt i | i <- lst ]
   where lst = reverse [0..7]

@@ -21,7 +21,7 @@ iv[16] =
 test_init :: TestTree
 test_init
   = testGroup "Unit tests"
-  [ initTests
+  [ initUnitTests
   ]
 
 key :: [Word8]
@@ -91,25 +91,23 @@ stateAfterInit = IState
        , 0x3dc6c6bc876beb72, 0x39d84df58f8840e2, 0xcd7fe2794367de6c, 0x680920245819a4f5
        , 0xf5e9e609dd8e3cc3, 0x9cf94157cf512603, 0x871323e1d70caa2b, 0x0b6bb4c0466c7aba ]
 
-{-
-output =
-bc62430614b79b71 71a66681c35542de 7aba5b4fb80e82d7 0b96982890b6e143
-4930b5d033157f46 b96ed8499a282645 dbeb1ef16d329b15 34a9192c4ddcf34e
--}
+output :: [Word64]
+output = [ 0xbc62430614b79b71, 0x71a66681c35542de, 0x7aba5b4fb80e82d7, 0x0b96982890b6e143
+         , 0x4930b5d033157f46, 0xb96ed8499a282645, 0xdbeb1ef16d329b15, 0x34a9192c4ddcf34e ]
 
-initTests :: TestTree
-initTests
+initUnitTests :: TestTree
+initUnitTests
   = testGroup "init function works fine"
   [ testCase "firstStep" $ stateAfterKeyInput @=? v1
   , testCase "mixing with rho - 1" $ stateAfterMix @=? v2
   , testCase "secondStep: IV input" $ stateAfterIVInput @=? v3
   , testCase "mixing with rho - 2" $ stateAfterSecondMixing @=? v4
   , testCase "thirdStep" $ stateAfterInit @=? v5
+  , testCase "output" $ output @=? v6
   ] where
   v1 = firstStep secret
   v2 = mixing v1
   v3 = ivInput v2 initVector
   v4 = IState (mixing v3^.stateA) (v3^.stateB)
   v5 = thirdStep v4
-
-
+  v6 = take 8 $ mugiStream v5

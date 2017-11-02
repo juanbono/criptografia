@@ -3,11 +3,6 @@ extra-package-dbs: []
 packages:
 - .
 extra-deps:
-- friday-0.2.3.1
-- hip-1.5.3.0
 - modular-arithmetic-1.2.1.2
-- ratio-int-0.1.2
-- repa-3.4.1.2
-- bitwise-0.1.1.1
 - bytestring-arbitrary-0.1.1
-resolver: lts-9.9
+resolver: lts-9.11
