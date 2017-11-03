@@ -1,6 +1,9 @@
 # [criptografia]() 
 [![Build Status](https://travis-ci.org/juanbono/criptografia.svg?branch=master)](https://travis-ci.org/juanbono/criptografia)
 
+![Encryption and decryption using MUGI](https://i.imgur.com/iuwf1Kl.png)
+
+
 ##### Useful commands:
 
 ``` sh
