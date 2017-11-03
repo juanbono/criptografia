@@ -1,13 +1,30 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Main where
 
 import Criptografia
-import Conduit
-import Data.Char (toUpper, toLower)
-import Control.Lens
+import qualified Data.ByteString.Lazy.Char8 as C8
+import qualified Data.ByteString.Lazy as BS
+import Data.LargeWord (Word128)
+import Options.Applicative (execParser)
+import Data.Semigroup
+import CLI
 
-caesarWithLength1 :: Char -> Char
-caesarWithLength1 = caesar^.encrypt $ 1
+toWord128 :: String -> Word128
+toWord128 = fromByte128 . BS.unpack. C8.pack
 
+main :: IO ()
+main = do
+  cmd <- execParser opts
+  let (key, initv) = (toWord128 . secretKey $ cmd, toWord128 . iv $ cmd)
+  (img, (width, height)) <- readImage (filename cmd)
+  print $ "width: " <> show width <> " and height: " <> show height
+  print $ "key: " <> show key <> " and iv: " <> show initv
+  let stream = mugiStream $ initMugi key initv
+  print $ show (take 10 stream)
+
+{-
+conduit example:
 main :: IO ()
 main
   = runConduitRes
@@ -18,4 +35,4 @@ main
  .| omapCE toLower
  .| encodeUtf8C
  .| sinkFile "input2.txt"
-
+--}

@@ -2,7 +2,14 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE UnicodeSyntax #-}
 
-module Criptografia.Mugi where
+module Criptografia.Mugi
+  ( mixing
+  , initMugi
+  , mugiStream
+  , firstStep
+  , thirdStep
+  , ivInput
+  ) where
 
 import Criptografia.Mugi.Internal
 import Data.Maybe (fromJust)
