@@ -6,6 +6,7 @@ module Criptografia.Mugi
   ( mixing
   , initMugi
   , mugiStream
+  , mugiGenerate
   , firstStep
   , thirdStep
   , ivInput
@@ -17,6 +18,19 @@ import Data.Word (Word8, Word64)
 import Data.LargeWord (Word128, loHalf, hiHalf)
 import Control.Lens ((^.))
 import Data.Finite (finite)
+
+mugiStream :: IState -> [Word64]
+mugiStream = map ((!2) . _stateA) . iterate updateFunction
+
+mugiGenerate :: IState -> Word64
+mugiGenerate st = (updateFunction st^.stateA) ! 2
+
+initMugi :: Word128 -> Word128 -> IState
+initMugi k iv = thirdStep s3
+  where
+    s1 = mixing (firstStep k)
+    s2 = ivInput s1 iv
+    s3 = IState (mixing s2^.stateA) (s2^.stateB)
 
 p :: [Word8] -> [Word8] -> [Word8]
 p a b = sbox . fromIntegral <$> zipWith (<+>) a b
@@ -87,25 +101,3 @@ ivInput (IState a b) iv = IState a1 b
 
 thirdStep :: IState -> IState
 thirdStep = last . take 17 . iterate updateFunction
-
-initMugi :: Word128 -> Word128 -> IState
-initMugi k iv = thirdStep s3
-  where
-    s1 = mixing (firstStep k)
-    s2 = ivInput s1 iv
-    s3 = IState (mixing s2^.stateA) (s2^.stateB)
-
-mugi :: IState -> Word128 -> Word128 -> Word64
-mugi = undefined
-
-mugiStream :: IState -> [Word64]
-mugiStream = map ((!2) . _stateA) . iterate updateFunction
-
-mugiGenerate :: IState -> Word64
-mugiGenerate st = (updateFunction st^.stateA) ! 2
-
-mugiEncrypt :: Word128 -> Word128 -> Word64 -> Word64
-mugiEncrypt = undefined
-
-mugiDecrypt :: Word128 -> Word128 -> Word64 -> Word
-mugiDecrypt = undefined

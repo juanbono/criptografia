@@ -28,19 +28,24 @@ module Criptografia.Mugi.Internal
   , fromBS
   , toBS
   , unsafeFromList
+  , fromString
+  , toWord64List
+  , toWord8List
   ) where
 
 import qualified Data.Vector.Generic.Sized as Vec
-import qualified Data.ByteString.Lazy as B
+import qualified Data.ByteString as B
+import qualified Data.ByteString.Char8 as C8
 import qualified Data.Bits as Bit
 import qualified Data.Vector as V
-import Control.Lens ((^.), makeLenses)
+import Control.Lens
 import Data.Bits.Lens
 import GHC.TypeLits
 import Data.Finite
 import Data.Maybe
 import Data.Word
 import Data.LargeWord
+import Data.List.Split
 
 type Vector l t = Vec.Vector V.Vector l t
 
@@ -52,6 +57,15 @@ data IState
 
 makeLenses ''IState
 
+fromString :: String -> Word128
+fromString = fromByte128 . B.unpack . C8.pack
+
+toWord64List :: [Word8] -> [Word64]
+toWord64List = map fromByte . chunksOf 8
+
+toWord8List :: [Word64] -> [Word8]
+toWord8List = concatMap toByte
+
 emptyBuffer :: Vector 16 Word64
 emptyBuffer = Vec.replicate 0
 
@@ -60,8 +74,7 @@ updateWith :: Vector 16 Word64 -> [(Int, Word64)] -> Vector 16 Word64
 updateWith = (Vec.//)
 
 toByte128 :: Word128 -> [Word8]
-toByte128 w = [w^.byteAt i | i <- lst ]
-  where lst = reverse [0..15]
+toByte128 = reverse . toListOf bytewise
 
 fromByte128 :: [Word8] -> Word128
 fromByte128 xs = fromIntegral $ sum values
@@ -69,13 +82,11 @@ fromByte128 xs = fromIntegral $ sum values
     powersOf256 = [256^i | i <- reverse [0..15] :: [Integer]]
     values = zipWith (*) (map fromIntegral xs) powersOf256 :: [Integer]
 
--- refactor
 toByte :: Word64 -> [Word8]
-toByte w = [ w^.byteAt i | i <- lst ]
-  where lst = reverse [0..7]
+toByte = reverse . toListOf bytewise
 
 fromByte :: [Word8] -> Word64
-fromByte xs = sum $ map fromIntegral values
+fromByte xs = sum values
   where
     powersOf256 = [256^i | i <- reverse [0..7] :: [Word64]]
     values = zipWith (*) (map fromIntegral xs) powersOf256 :: [Word64]
@@ -102,9 +113,9 @@ register <<< n = Bit.rotateL register (fromIntegral n)
 v ! i = Vec.index v i
 
 rearrange :: [Int] -> [a] -> Maybe [a]
-rearrange indices xs
-  = if length indices == length xs
-    then Just $ go indices xs []
+rearrange ixs xs
+  = if length ixs == length xs
+    then Just $ go ixs xs []
     else Nothing
   where go [] _ acc = acc
         go (i:is) as acc = (as !! i) : go is xs acc

@@ -19,38 +19,27 @@ dependencies:
   - lens
   - mtl
   - modular-arithmetic
-  - simple-reflect
+  - finite-typelits
+
 library:
   dependencies:
   - base
   - vector
-  - finite-typelits
   - JuicyPixels
   - bmp
+  - split
   source-dirs: library
   exposed-modules:
     - Criptografia
-  ghc-options: -Wall
+  ghc-options: -Wall -O2
 
 executables:
   cripto-cli:
     dependencies:
     - base
-    - finite-typelits
     - criptografia
     - optparse-applicative
-    - system-filepath
-    - mono-traversable
-    - conduit-combinators
     - resourcet
-    - configurator
-    - conduit
-    - conduit-combinators
-    - conduit-extra
-    - path
-    - path-io
-    - turtle
-    - ansi-terminal
     ghc-options:
     - -rtsopts
     - -threaded

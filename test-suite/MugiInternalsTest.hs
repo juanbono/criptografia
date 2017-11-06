@@ -10,8 +10,8 @@ import Test.Tasty.Hspec
 import Test.Tasty.HUnit
 import Data.ByteString.Arbitrary
 import Data.LargeWord
+import Data.Word
 import Control.Monad
-import qualified Data.ByteString.Lazy as B
 import qualified Data.ByteString as BS
 
 rearrangeSpecs :: Spec
@@ -86,9 +86,16 @@ test_toBS_fromBS
   = testGroup "toBS and fromBS tests"
 
   [ testProperty "fromBS . toBS = id" $
-    \(ABS8 b) -> (toBS . fromBS . B.fromStrict) b == B.fromStrict b
+    \(ABS8 b) -> (toBS . fromBS) b == b
   ]
 
+-- this property works only on lists without \NUL characters
+test_toWord64List_tests :: TestTree
+test_toWord64List_tests
+  = testGroup "toWord64List and toWord8List"
+  [ testProperty "toWord8List . toWord64List = id" $
+    \(x :: [Word8]) ->  (filter (/= 0) . toWord8List . toWord64List) x == filter (/= 0) x
+  ]
 
 -- | A ByteString wrapper so we can implement Arbitrary for ByteString. This
 -- will currently generate random ByteStrings of length 0 to 8B.
@@ -100,10 +107,8 @@ newtype ArbByteString8 = ABS8 { fromABS8 :: BS.ByteString }
 instance Arbitrary ArbByteString8 where
   arbitrary = do
     len <- choose (0, 8)
-    let filterNuls bs = packAndtoStrict (toListOfBytes bs) -- corregir manejo de nul
-    --filter (/= nulAscii) (toListOfBytes bs)
-          where packAndtoStrict = B.toStrict . B.pack
-                toListOfBytes = toByte . fromBS . B.fromStrict
+    let filterNuls bs = BS.pack (toListOfBytes bs) -- null handling is missing
+          where toListOfBytes = toByte . fromBS
                 -- nulAscii = 0 :: Integer
     (ABS8 . filterNuls) <$> fastRandBs len
 
