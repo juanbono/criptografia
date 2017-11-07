@@ -7,6 +7,8 @@ module Criptografia.Mugi
   , initMugi
   , mugiStream
   , mugiGenerate
+  , mugiEncrypt
+  , randomStream
   , firstStep
   , thirdStep
   , ivInput
@@ -19,8 +21,14 @@ import Data.LargeWord (Word128, loHalf, hiHalf)
 import Control.Lens ((^.))
 import Data.Finite (finite)
 
-mugiStream :: IState -> [Word64]
-mugiStream = map ((!2) . _stateA) . iterate updateFunction
+mugiEncrypt :: Word128 -> Word128 -> [Word64] -> [Word64]
+mugiEncrypt k iv xs = zipWith (<+>) xs (mugiStream k iv)
+
+mugiStream :: Word128 -> Word128 -> [Word64]
+mugiStream k iv = randomStream (initMugi k iv)
+
+randomStream :: IState -> [Word64]
+randomStream = map ((!2) . _stateA) . iterate updateFunction
 
 mugiGenerate :: IState -> Word64
 mugiGenerate st = (updateFunction st^.stateA) ! 2
@@ -39,11 +47,14 @@ mds :: [Word8] -> [Word8]
 mds xs = [x0Eq, x1Eq, x2Eq, x3Eq]
   where
     xss = map fromIntegral xs
-    (xs0, xss0) = (head xs, head xss)
-    x0Eq = mul2 xss0 ⊕ (xs!!1) ⊕ mul2 (xss!!1) ⊕ (xs!!2) ⊕ (xs!!3)
-    x1Eq = xs0 ⊕ mul2 (xss!!1) ⊕ (xs!!2) ⊕ mul2 (xss!!2) ⊕ (xs!!3)
-    x2Eq = xs0 ⊕ (xs!!1) ⊕ mul2 (xss!!2) ⊕ (xs!!3) ⊕ mul2 (xss!!3)
-    x3Eq = xs0 ⊕ mul2 xss0 ⊕ (xs!!1) ⊕ (xs!!2) ⊕ mul2 (xss!!3)
+    (xs0, xs1, mul2xss0) = (head xs, xs!!1, mul2 $ head xss)
+    (mul2xss3, mul2xss1) = (mul2 (xss!!3), mul2 (xss!!1))
+    (xs2, xs3, mul2xss2) = (xs!!2, xs!!3, mul2 (xss!!2))
+
+    x0Eq = mul2xss0 ⊕ xs1 ⊕ mul2xss1 ⊕ xs2 ⊕ xs3
+    x1Eq = xs0 ⊕ mul2xss1 ⊕ xs2 ⊕ mul2xss2 ⊕ xs3
+    x2Eq = xs0 ⊕ xs1 ⊕ mul2xss2 ⊕ xs3 ⊕ mul2xss3
+    x3Eq = xs0 ⊕ mul2xss0 ⊕ xs1 ⊕ xs2 ⊕ mul2xss3
 
 q :: [Word8] -> [Word8]
 q xs = fromJust $ rearrange is (qh ++ ql)

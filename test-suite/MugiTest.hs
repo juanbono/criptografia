@@ -110,4 +110,4 @@ initUnitTests
   v3 = ivInput v2 initVector
   v4 = IState (mixing v3^.stateA) (v3^.stateB)
   v5 = thirdStep v4
-  v6 = take 8 $ mugiStream v5
+  v6 = take 8 $ randomStream v5

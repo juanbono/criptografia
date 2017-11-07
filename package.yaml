@@ -20,6 +20,7 @@ dependencies:
   - mtl
   - modular-arithmetic
   - finite-typelits
+  - repa
 
 library:
   dependencies:
