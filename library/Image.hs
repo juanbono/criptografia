@@ -7,8 +7,6 @@ module Image
 
 import qualified Data.ByteString as BS
 import Criptografia.Mugi.Internal (toWord64List, toWord8List)
-import Data.ByteString.Lens
-import Control.Lens ((^.), from)
 import Data.Word
 import Codec.BMP
 
@@ -37,7 +35,7 @@ writeImage f (bs, (w, h))
     bmp = packRGBA32ToBMP w h bs
 
 unpackWord64 :: BS.ByteString -> [Word64]
-unpackWord64 img = toWord64List (img^.from packedBytes)
+unpackWord64 = toWord64List . BS.unpack
 
 packWord64 :: [Word64] -> BS.ByteString
 packWord64 = BS.pack . toWord8List

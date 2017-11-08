@@ -6,7 +6,6 @@ import Data.Semigroup
 
 data CommandType
   = EncryptBMPImage { secretKey :: String, iv ::  String, filename :: FilePath }
-  | DecryptBMPImage { secretKey :: String, iv ::  String, filename :: FilePath }
   deriving (Show)
 
 mkBMPParser :: (String -> String -> FilePath -> CommandType)
@@ -31,12 +30,8 @@ mkBMPParser cmdType = cmdType
 encryptBMPParser :: Parser CommandType
 encryptBMPParser = mkBMPParser EncryptBMPImage
 
-decryptBMPParser :: Parser CommandType
-decryptBMPParser = mkBMPParser DecryptBMPImage
-
 parseCommand :: Parser CommandType
-parseCommand = encryptBMPParser <|> decryptBMPParser
-
+parseCommand = encryptBMPParser
 
 opts :: ParserInfo CommandType
 opts = info (parseCommand <**> helper)

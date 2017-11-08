@@ -13,26 +13,24 @@ description: Cryptographic Algorithms
 category: Other
 
 dependencies:
-  - vector-sized
   - bytestring
   - largeword
   - lens
-  - mtl
   - modular-arithmetic
-  - finite-typelits
-  - repa
+  - vector
 
 library:
   dependencies:
   - base
-  - vector
-  - JuicyPixels
   - bmp
   - split
+  - vector-sized
+  - finite-typelits
+
   source-dirs: library
   exposed-modules:
     - Criptografia
-  ghc-options: -Wall -O2
+  ghc-options: -O2 -Wall
 
 executables:
   cripto-cli:

@@ -1,9 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE UnicodeSyntax #-}
 
-module Criptografia.Mugi.Internal
+module Criptografia.Mugi.InternalVector
   ( (>>>)
   , (<<<)
   , (⊕)
@@ -16,7 +14,6 @@ module Criptografia.Mugi.Internal
   , c0
   , c1
   , c2
-  , Vector
   , fromByte
   , toByte
   , fromByte128
@@ -27,33 +24,25 @@ module Criptografia.Mugi.Internal
   , rearrange
   , fromBS
   , toBS
-  , unsafeFromList
   , fromString
   , toWord64List
   , toWord8List
   ) where
 
-import qualified Data.Vector.Generic.Sized as Vec
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as C8
 import qualified Data.Bits as Bit
-
-import qualified Data.Vector as V
-import Control.Lens
-import Data.Bits.Lens
-import GHC.TypeLits
-import Data.Finite
-import Data.Maybe
-import Data.Word
-import Data.LargeWord
-import Data.List.Split
-
-type Vector l t = Vec.Vector V.Vector l t
+import qualified Data.Vector.Unboxed as V
+import Control.Lens (makeLenses, toListOf)
+import Data.Bits.Lens (bytewise)
+import Data.Word (Word8, Word64)
+import Data.LargeWord (Word128)
+import Data.List.Split (chunksOf)
 
 data IState
   = IState
-  { _stateA :: Vector  3 Word64
-  , _stateB :: Vector 16 Word64
+  { _stateA :: V.Vector Word64
+  , _stateB :: V.Vector Word64
   } deriving (Show, Eq, Ord)
 
 makeLenses ''IState
@@ -67,12 +56,14 @@ toWord64List = map fromByte . chunksOf 8
 toWord8List :: [Word64] -> [Word8]
 toWord8List = concatMap toByte
 
-emptyBuffer :: Vector 16 Word64
-emptyBuffer = Vec.replicate 0
+emptyBuffer :: V.Vector Word64
+emptyBuffer = V.replicate 16 0
 
--- rename Data.Vector.Generic.Sized.(//) operator for better readability
-updateWith :: Vector 16 Word64 -> [(Int, Word64)] -> Vector 16 Word64
-updateWith = (Vec.//)
+(!) :: V.Unbox a => V.Vector a -> Int -> a
+v ! n =  v V.! n
+
+updateWith :: V.Vector Word64 -> [(Int, Word64)] -> V.Vector Word64
+updateWith = (V.//)
 
 toByte128 :: Word128 -> [Word8]
 toByte128 = reverse . toListOf bytewise
@@ -110,9 +101,6 @@ register <<< n = Bit.rotateL register (fromIntegral n)
 (<+>) :: Bit.Bits a => a -> a -> a
 (<+>) = (⊕)
 
-(!) :: ∀ n t. KnownNat n => Vector n t -> Finite n -> t
-v ! i = Vec.index v i
-
 rearrange :: [Int] -> [a] -> Maybe [a]
 rearrange ixs xs
   = if length ixs == length xs
@@ -121,20 +109,17 @@ rearrange ixs xs
   where go [] _ acc = acc
         go (i:is) as acc = (as !! i) : go is xs acc
 
-unsafeFromList :: KnownNat n => [a] -> Vector n a
-unsafeFromList = fromJust . Vec.fromList
-
 -- constants
 c0, c1, c2 :: Word64
 c0 = 0x6a09e667f3bcc908 -- sqrt(2)*2^64
 c1 = 0xbb67ae8584caa73b -- sqrt(3)*2^64
 c2 = 0x3c6ef372fe94f82b -- sqrt(5)*2^64
 
-sbox :: Finite 256 -> Word8
-sbox x = sboxTable ! x
+sbox :: Int -> Word8
+sbox x = sboxTable V.! x
 
-sboxTable :: Vector 256 Word8
-sboxTable = unsafeFromList
+sboxTable :: V.Vector Word8
+sboxTable = V.fromList
   [ 0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5
   , 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76
   , 0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0
@@ -169,13 +154,13 @@ sboxTable = unsafeFromList
   , 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16
   ]
 
-mul2 :: Finite 256 -> Word8
-mul2 x = mul2Table ! x
+mul2 :: Int -> Word8
+mul2 x = mul2Table V.! x
 
 -- multiplication table of 0x02
 -- given as follows: 0x02 * x = mul2[x]
-mul2Table :: Vector 256 Word8
-mul2Table = unsafeFromList
+mul2Table :: V.Vector Word8
+mul2Table = V.fromList
   [ 0x00, 0x02, 0x04, 0x06, 0x08, 0x0a, 0x0c, 0x0e
   , 0x10, 0x12, 0x14, 0x16, 0x18, 0x1a, 0x1c, 0x1e
   , 0x20, 0x22, 0x24, 0x26, 0x28, 0x2a, 0x2c, 0x2e
