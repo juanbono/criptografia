@@ -1,8 +1,11 @@
 
-module Options (parseCommand, opts, CommandType (..)) where
+module Options (parseArgs, CommandType (..)) where
 
 import Options.Applicative
 import Data.Semigroup
+
+parseArgs :: IO CommandType
+parseArgs = execParser opts
 
 data CommandType
   = EncryptBMPImage { secretKey :: String, iv ::  String, filename :: FilePath }

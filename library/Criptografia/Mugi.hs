@@ -16,6 +16,7 @@ module Criptografia.Mugi
 import Criptografia.Mugi.Internal
 import qualified Data.Vector.Unboxed as U
 import Data.Word (Word8, Word64)
+import Control.Lens (over, both)
 import Data.LargeWord (Word128, loHalf, hiHalf)
 
 mugiEncrypt :: Word128 -> Word128 -> [Word64] -> [Word64]
@@ -54,7 +55,7 @@ q :: [Word8] -> [Word8]
 q xs = [q4, q5, q2, q3, q0, q1, q6, q7]
   where
     T8Byte q0 q1 q2 q3 q4 q5 q6 q7
-      = (toT8Byte . uncurry (++) . mapTuple mds . splitAt 4) xs
+      = (toT8Byte . uncurry (++) . over both mds . splitAt 4) xs
 
 f :: Word64 -> Word64 -> Word64
 f a b = fromByte . q $ p (toByte a) (toByte b)
