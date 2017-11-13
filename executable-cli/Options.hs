@@ -1,5 +1,5 @@
 
-module CLI (parseCommand, opts, CommandType (..)) where
+module Options (parseCommand, opts, CommandType (..)) where
 
 import Options.Applicative
 import Data.Semigroup

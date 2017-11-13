@@ -1,7 +1,7 @@
 module Main where
 
 import Criptografia
-import CLI
+import Options
 import Options.Applicative (execParser)
 
 main :: IO ()

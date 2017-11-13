@@ -1,5 +1,6 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module MugiInternalsTest where
 
@@ -13,32 +14,6 @@ import Data.LargeWord
 import Data.Word
 import Control.Monad
 import qualified Data.ByteString as BS
-
-rearrangeSpecs :: Spec
-rearrangeSpecs
-  = describe "rearrange" $ do
-
-      it "rearranges the elements correctly" $
-        let xs = [0,1,2] :: [Int]
-            is = [1,0,2]
-        in rearrange is xs `shouldBe` Just [xs!!1, head xs, xs!!2]
-
-      it "works on empty lists" $
-        rearrange [1,0] ([] :: [Int]) `shouldBe` Nothing
-
-      it "works given wrong indices" $
-        let xs = [1,2] :: [Int]
-            is = [1,0,3]
-        in  rearrange is xs `shouldBe` Nothing
-
-      it "works given empty indeces list" $
-        let xs = [1,2] :: [Int]
-            is = []
-        in rearrange is xs `shouldBe` Nothing
-
-test_rearrange :: IO TestTree
-test_rearrange
-  = testSpec "MUGI Internal Module" rearrangeSpecs
 
 test_toByte_fromByte :: TestTree
 test_toByte_fromByte

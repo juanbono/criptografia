@@ -32,7 +32,7 @@ writeImage :: FilePath -> (BS.ByteString, Header) -> IO ()
 writeImage f (bs, (w, h))
   = writeBMP f bmp
   where
-    bmp = packRGBA32ToBMP w h bs
+    bmp = packRGBA32ToBMP24 h w bs
 
 unpackWord64 :: BS.ByteString -> [Word64]
 unpackWord64 = toWord64List . BS.unpack

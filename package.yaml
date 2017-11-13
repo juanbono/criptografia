@@ -25,12 +25,12 @@ library:
   - bmp
   - split
   - vector-sized
-  - finite-typelits
-
   source-dirs: library
   exposed-modules:
     - Criptografia
-  ghc-options: -O2 -Wall
+  ghc-options:
+    - -O2
+    - -Wall
 
 executables:
   cripto-cli:
@@ -38,14 +38,11 @@ executables:
     - base
     - criptografia
     - optparse-applicative
-    - resourcet
     ghc-options:
     - -rtsopts
-    - -threaded
-    - -with-rtsopts=-N
     main: Main.hs
     source-dirs: executable-cli
-  cripto-http:
+  cripto-gui:
     dependencies:
       - base
       - criptografia
@@ -54,7 +51,7 @@ executables:
       - -threaded
       - -with-rtsopts=-N
     main: Main.hs
-    source-dirs: executable-http
+    source-dirs: executable-gui
 
 tests:
   criptografia-test-suite:
