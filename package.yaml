@@ -22,7 +22,6 @@ dependencies:
 library:
   dependencies:
   - base
-  - bmp
   - split
   - vector-sized
   source-dirs: library

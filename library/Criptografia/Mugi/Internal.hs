@@ -27,6 +27,8 @@ module Criptografia.Mugi.Internal
   , fromString
   , toWord64List
   , toWord8List
+  , packWord64
+  , unpackWord64
   , toT4Byte
   , fromT4Byte
   , toT8Byte
@@ -36,12 +38,9 @@ module Criptografia.Mugi.Internal
   , (⊕)
   , (<+>)
   , (!)
-  -- * Things with bad names
-  , mapTuple
   ) where
 
 import qualified Data.ByteString as B
-import qualified Data.ByteString.Char8 as C8
 import qualified Data.Bits as Bit
 import qualified Data.Vector.Unboxed as U
 import Control.Lens (toListOf)
@@ -67,13 +66,19 @@ stateB :: IState -> U.Vector Word64
 stateB (IState _ b) = b
 
 fromString :: String -> Word128
-fromString = fromByte128 . B.unpack . C8.pack
+fromString x = fromIntegral (read x :: Integer)
 
 toWord64List :: [Word8] -> [Word64]
 toWord64List = map fromByte . chunksOf 8
 
 toWord8List :: [Word64] -> [Word8]
 toWord8List = concatMap toByte
+
+unpackWord64 :: B.ByteString -> [Word64]
+unpackWord64 = toWord64List . B.unpack
+
+packWord64 :: [Word64] -> B.ByteString
+packWord64 = B.pack . toWord8List
 
 emptyBuffer :: U.Vector Word64
 emptyBuffer = U.replicate 16 0
@@ -147,10 +152,6 @@ data T8Byte
 toT8Byte :: [Word8] -> T8Byte
 toT8Byte [q0,q1,q2, q3, q4, q5, q6, q7] = T8Byte q0 q1 q2 q3 q4 q5 q6 q7
 toT8Byte _ = error "wrong size list"
-
-mapTuple :: (a -> b) -> (a, a) -> (b, b)
-mapTuple fun (a, b) = (fun a, fun b)
-
 
 -- constants
 c0, c1, c2 :: Word64
