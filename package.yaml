@@ -32,7 +32,7 @@ library:
     - -Wall
 
 executables:
-  cripto-cli:
+  mugi:
     dependencies:
     - base
     - criptografia
