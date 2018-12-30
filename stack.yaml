@@ -3,11 +3,13 @@ extra-package-dbs: []
 packages:
 - .
 extra-deps:
-- modular-arithmetic-1.2.1.2
-- bytestring-arbitrary-0.1.1
+- modular-arithmetic-1.2.1.4
+- bytestring-arbitrary-0.1.2
 
-resolver: lts-9.11
+resolver: lts-13.0
 
 build:
   library-profiling: false
   executable-profiling: false
+
+allow-newer: true
